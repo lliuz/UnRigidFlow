@@ -61,7 +61,13 @@ coming soon.
 
 ## Models
 
-coming soon.
+You can download our [pre-trained models]()(coming soon), here are the model list and the performance:
+
+- `FlyingChairs_sep`: The separately trained optical flow network on FlyingChairs, which reaches 3.67 EPE on the validation set.
+- `Cityscapes_sep`: The separately trained optical flow network on Cityscapes. Surprisingly, it reaches 7.24 EPE on the KITTI 15 training set.
+- `KITTI_raw_sep`: The separately trained optical flow network on KITTI raw data (from scratch), which reaches 6.50 EPE on the KITTI 15 training set.
+- `KITTI_raw_joint`: The optical flow network jointly trained with stereo depth on KITTI raw data, which reaches 5.49 EPE on the KITTI 15 training set. It can reach 5.17 EPE on the KITTI 15 training set, and 11.66% F1 scores on KITTI 15 test set by fusing with rigidity segmentation.
+- `KITTI_stereo_depth`: The stereo depth network on KITTI raw data.
 
 ## Acknowledgement
 
