@@ -8,7 +8,7 @@ Here are two sample results (~10MB gif for each) of our unsupervised models.
 | :----------------------: | :--------------------------------: |
 | ![kitti](demo/kitti.gif) | ![cityscapes](demo/cityscapes.gif) |
 
-Basic training and testing are already included in this repository, so that you can use it to reproduce the results in the paper. 
+Basic training and testing will be included in this repository, so that you can use it to reproduce the results in the paper. 
 
 ## Requirements
 

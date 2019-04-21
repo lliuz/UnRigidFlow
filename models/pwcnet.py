@@ -87,9 +87,9 @@ class PWCFlow(nn.Module):
         x1_pyramid = self.feature_pyramid_extractor(im1) + [im1]
         x2_pyramid = self.feature_pyramid_extractor(im2) + [im2]
 
-        flows_f = self.forward_once(x1_pyramid, x2_pyramid)
+        flows_f = self._forward(x1_pyramid, x2_pyramid)
         if with_bk:
-            flows_b = self.forward_once(x2_pyramid, x1_pyramid)
+            flows_b = self._forward(x2_pyramid, x1_pyramid)
             flows = [torch.cat((flow_f, flow_b), 1)
                      for flow_f, flow_b in zip(flows_f, flows_b)]
             return flows
@@ -198,7 +198,7 @@ class PWCStereo(nn.Module):
         x1_pyramid = self.feature_pyramid_extractor(im1) + [im1]
         x2_pyramid = self.feature_pyramid_extractor(im2) + [im2]
 
-        disp_lr = self.forward_once(x1_pyramid, x2_pyramid, neg=False)
-        disp_rl = self.forward_once(x2_pyramid, x1_pyramid, neg=True)
+        disp_lr = self._forward(x1_pyramid, x2_pyramid, neg=False)
+        disp_rl = self._forward(x2_pyramid, x1_pyramid, neg=True)
         disps = [torch.cat((lr + 1e-6, rl + 1e-6), 1) for lr, rl in zip(disp_lr, disp_rl)]
         return disps
