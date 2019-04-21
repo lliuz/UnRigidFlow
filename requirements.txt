@@ -1,0 +1,9 @@
+imageio==2.4.1
+numpy==1.15.1
+path.py==11.1.0
+Pillow==5.2.0
+scikit-image==0.14.0
+scipy==1.1.0
+tensorboardX==1.4
+torch>=0.4.1
+torchvision==0.2.1
