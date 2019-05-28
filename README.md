@@ -1,6 +1,6 @@
-## Declaration
+## UnRigidFlow
 
-This work has not been published yet. This repository will be transferred to the official account when the paper is accepted, and the paper information will be provided. To ensure anonymity, I will not accept any PR or issue for the time being.
+PyTorch implementation for Unsupervised Learning of Scene Flow Estimation Fusing with Local Rigidity.
 
 Here are two sample results (~10MB gif for each) of our unsupervised models.
 
@@ -8,7 +8,7 @@ Here are two sample results (~10MB gif for each) of our unsupervised models.
 | :----------------------: | :--------------------------------: |
 | ![kitti](demo/kitti.gif) | ![cityscapes](demo/cityscapes.gif) |
 
-Basic training and testing will be included in this repository, so that you can use it to reproduce the results in the paper. 
+Basic training and testing will be included in this repository, so you can use it to reproduce the results in the paper. 
 
 ## Requirements
 
@@ -31,7 +31,7 @@ and add `<correlation_package>` to `$PYTHONPATH`.
 
 > Note that if you are use PyTorch 1.0, you should make some changes, see [NVIDIA/flownet2-pytorch#98](https://github.com/NVIDIA/flownet2-pytorch/pull/98).
 >
-> Just replace `#include <torch/torch.h>` with `#include <torch/extension.h>` , adding  `#include <ATen/cuda/CUDAContext.h>` and then replacing all `at::globalContext().getCurrentCUDAStream()` with `at::cuda::getCurrentCUDAStream()`.
+> Replace `#include <torch/torch.h>` with `#include <torch/extension.h>` , adding  `#include <ATen/cuda/CUDAContext.h>` and then replacing all `at::globalContext().getCurrentCUDAStream()` with `at::cuda::getCurrentCUDAStream()`.
 
 ## Data Preparation
 
