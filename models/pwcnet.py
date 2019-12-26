@@ -77,6 +77,8 @@ class PWCFlow(nn.Module):
             flows.append(flow)
             if len(flows) == self.n_out:
                 break
+        flows = [F.interpolate(flow * 4, scale_factor=4,
+                               mode='bilinear', align_corners=True) for flow in flows]
         return flows[::-1]
 
     def forward(self, x, with_bk=False):
@@ -153,11 +155,13 @@ class PWCStereo(nn.Module):
                 else:
                     flow = F.relu(flow)
             else:
-                up_flow = F.interpolate(flow * 2, scale_factor=2,
+                # predict the normalized disparity to keep consistent with MonoDepth
+                # for reusing the hyper-parameters
+                up_flow = F.interpolate(flow, scale_factor=2,
                                         mode='bilinear', align_corners=True)
 
                 zeros = torch.zeros_like(up_flow)
-                x2_warp = flow_warp(x2, torch.cat([up_flow, zeros], dim=1))
+                x2_warp = flow_warp(x2, torch.cat([up_flow, zeros], dim=1),)
 
                 corr = self.corr(x1, x2_warp)
                 F.leaky_relu_(corr)

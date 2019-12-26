@@ -1,0 +1,138 @@
+{
+  "aug": {
+    "hflip": true,
+    "swap": true
+  },
+  "data": {
+    "flow_data": "/Data/flow_dataset/kitti_scene_flow/training/",
+    "root": "/Data/KITTI_raw/",
+    "test_shape": [
+      256,
+      832
+    ],
+    "test_stereo": true,
+    "train_file": "./data/filenames/kitti_train_files_png_4frames.txt",
+    "train_shape": [
+      256,
+      832
+    ],
+    "train_stereo": true,
+    "type": "KITTI_15"
+  },
+  "data_aug": {
+    "crop": false,
+    "hflip": false,
+    "hflipswap": false,
+    "resize": false,
+    "rotate": false,
+    "swap": false,
+    "trans": false,
+    "vflip": false,
+    "zoom": false
+  },
+  "loss": {
+    "PnP_method": "PnP",
+    "k_flow_e": 1.0,
+    "mask_by": "recons_th_or",
+    "mask_first": true,
+    "mask_th": 4.0,
+    "mask_with_occu": true,
+    "n": 4,
+    "norm_smooth": true,
+    "p_charbonnier": false,
+    "pyramid_md": [
+      3,
+      2,
+      2,
+      1
+    ],
+    "recons_p": 80,
+    "s_charbonnier": false,
+    "s_mask": false,
+    "sm_mask_th": 4.0,
+    "smooth_mask_by": "null",
+    "type": "rigidflow",
+    "valid_s": 4,
+    "w_cons": 0.1,
+    "w_cons_scales": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0
+    ],
+    "w_disp_grad": 1.0,
+    "w_l1": 0.15,
+    "w_lr": 1.0,
+    "w_rigid_scales": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0
+    ],
+    "w_rigid_warp": 1.0,
+    "w_s1": 0.0,
+    "w_s2": 1.0,
+    "w_scales": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0
+    ],
+    "w_sm_scales": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.0
+    ],
+    "w_smooth": 75.0,
+    "w_ssim": 0.85,
+    "w_ternary": 0.0,
+    "with_bk": true
+  },
+  "model": {
+    "bn": false,
+    "lv_chs": [
+      3,
+      16,
+      32,
+      64,
+      96,
+      128,
+      192
+    ],
+    "n_out": 5,
+    "type": "rigidflow_s"
+  },
+  "name": "KITTI_rigid_flow_stereo",
+  "save_root": "/Outputs/UnRigidFlow",
+  "seed": 0,
+  "train": {
+    "batch_size": 4,
+    "beta": 0.999,
+    "bias_decay": 0,
+    "epoch_size": 1000,
+    "epochs": 300,
+    "lr": 0.0001,
+    "lr_depth": 0.0001,
+    "lr_flow": 0.0001,
+    "momentum": 0.9,
+    "n_gpu": 1,
+    "optim": "adamw",
+    "pretrained_model": null,
+    "pretrained_model_depth": null,
+    "print_freq": 10,
+    "record_freq": 50,
+    "save_iter": 10000,
+    "train_depth": false,
+    "valid_size": 0,
+    "wd_depth": 0,
+    "wd_flow": 1e-06,
+    "weight_decay": 1e-06,
+    "workers": 4
+  },
+  "trainer": "KITTI_rigid_flow"
+}

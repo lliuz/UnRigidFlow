@@ -1,0 +1,72 @@
+{
+  "data": {
+    "flow_data": "/Data/flow_dataset/kitti_scene_flow/training/",
+    "root": "/Data/KITTI_raw/",
+    "test_shape": [
+      256,
+      832
+    ],
+    "test_stereo": true,
+    "train_file": "./data/filenames/kitti_train_files_png_4frames.txt",
+    "train_shape": [
+      256,
+      832
+    ],
+    "train_stereo": true,
+    "type": "KITTI_15"
+  },
+  "data_aug": {
+    "crop": false,
+    "hflip": true,
+    "hflipswap": false,
+    "resize": false,
+    "rotate": false,
+    "swap": false,
+    "trans": false,
+    "vflip": false,
+    "zoom": false
+  },
+  "loss": {
+    "n": 4,
+    "type": "monodepth",
+    "w_disp_grad": 1.0,
+    "w_lr": 1.0,
+    "w_ssim": 0.85
+  },
+  "model": {
+    "bn": false,
+    "lv_chs": [
+      3,
+      16,
+      32,
+      64,
+      96,
+      128,
+      192
+    ],
+    "n_out": 5,
+    "type": "pwcdisp"
+  },
+  "name": "KITTI_depth_stereo",
+  "save_root": "/Outputs/UnRigidFlow",
+  "seed": 1,
+  "train": {
+    "batch_size": 4,
+    "beta": 0.999,
+    "bias_decay": 0,
+    "epoch_size": 1000,
+    "epochs": 300,
+    "lr": 0.0001,
+    "momentum": 0.9,
+    "n_gpu": 1,
+    "optim": "adamw",
+    "pretrained_model": null,
+    "print_freq": 10,
+    "record_freq": 50,
+    "save_iter": 10000,
+    "valid_size": 0,
+    "weight_decay": 0.0,
+    "workers": 8
+  },
+  "trainer": "KITTI_depth"
+}
