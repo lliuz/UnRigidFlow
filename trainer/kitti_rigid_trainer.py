@@ -1,7 +1,6 @@
 import time
 import torch
 import numpy as np
-import torch.nn.functional as F
 from .base_trainer import BaseTrainer
 from utils.flow_utils import load_flow, evaluate_kitti_flow
 from utils.depth_utils import load_disp, convert_disp_to_depth, compute_depth_errors
@@ -45,14 +44,14 @@ class TrainFramework(BaseTrainer):
         is_best_flow = errors[1] < self.best_errors[1]
 
         if is_best_depth:
-            self.best_error[0] = errors[0]
+            self.best_errors[0] = errors[0]
 
         model = {'epoch': self.i_epoch,
                  'state_dict': self.model[1].module.state_dict()}
         save_checkpoint(self.save_root, model, names[0], is_best_depth)
 
         if is_best_flow:
-            self.best_error[1] = errors[1]
+            self.best_errors[1] = errors[1]
         model = {'epoch': self.i_epoch,
                  'state_dict': self.model[0].module.state_dict()}
         save_checkpoint(self.save_root, model, names[1], is_best_flow)
@@ -259,210 +258,10 @@ class TrainFramework(BaseTrainer):
             if i_step > self.cfg.valid_size:
                 break
 
-        # write error to tf board.
         for value, name in zip(error_meters.avg, error_names):
             self.summary_writer.add_scalar('Valid_' + name, value, self.i_epoch)
 
-        # In order to reduce the space occupied during debugging,
-        # only the model with more than cfg.save_iter iterations will be saved.
-        if self.i_iter > self.cfg.save_iter:
-            self.save_model([error_meters.avg[0], error_meters.avg[7]],
-                            ['KITTI_rigid_depth', 'KITTI_rigid_flow'])
-
-        return error_meters.avg, error_names
-
-    def _validate_with_gt_1(self):
-        from utils.rigid_utils import depth_flow2pose_pt, depth_pose2flow_pt, \
-            gaussianblur_pt, percentile_pt
-        from utils.warp_utils import flow_warp
-        from losses.loss_blocks import EPE, SSIM
-        import cv2
-        import scipy.misc as sm
-        from temp.evaluate_mask import eval_mask
-
-        batch_time = AverageMeter()
-
-        error_names = ['EPE', 'E_noc', 'E_occ', 'F1_all',
-                       'Pixel Acc', 'Mean Acc', 'Mean IoU', 'f.w. IoU']
-        # ['rmse', 'rmse_log', 'abs_rel', 'sq_rel', 'a1', 'a2', 'a3',
-        # 'EPE', 'E_noc', 'E_occ', 'F1_all']
-        error_meters = AverageMeter(i=len(error_names))
-
-        [m.eval() for m in self.model]
-        end = time.time()
-        for i_step, data in enumerate(self.valid_loader):
-            img1, img2, img_r = data['img1'], data['img2'], data['img1r']
-            img_pair = torch.cat([img1, img2], 1).to(self.device)
-
-            fl_bl = data['fl_bl'].to(self.device).type_as(img_pair)
-            pyramid_K = list(map(
-                lambda p: p.to(self.device).type_as(img_pair), data['pyramid_K']))
-            pyramid_K_inv = list(map(
-                lambda p: p.to(self.device).type_as(img_pair), data['pyramid_K_inv']))
-            raw_W = data['im_shape'][1].to(self.device).type_as(img_pair)
-
-            res = list(map(load_flow, data['flow_occ']))
-            gt_flows, occ_masks = [r[0] for r in res], [r[1] for r in res]
-            get_obj_masks = lambda p: (sm.imread(p.replace('flow_occ', 'obj_map')) != 0)
-            obj_masks = list(map(get_obj_masks, data['flow_occ']))
-            res = list(map(load_flow, data['flow_noc']))
-            _, noc_masks = [r[0] for r in res], [r[1] for r in res]
-
-            # compute pose
-            flows = self.model[0](img_pair, with_bk=True)
-            disparities = self.model[1](torch.cat([img1, img_r], 1).to(self.device))
-
-            disps = [d[:, 0] for d in disparities[:4]]
-
-            disp, flow, K, K_inv, = disps[0], flows[0], \
-                                    pyramid_K[0], pyramid_K_inv[0]
-
-            _, _, h, w = flow.size()
-            h, w = h * 4, w * 4
-            disp = F.interpolate(disp.unsqueeze(1), (h, w), mode='bilinear',
-                                 align_corners=True).squeeze(1) * raw_W.reshape(-1, 1, 1)
-
-            depth = fl_bl.reshape(-1, 1, 1) / disp.clamp(min=1e-3)
-            flow = F.interpolate(flow * 4, (h, w), mode='bilinear', align_corners=True)
-
-            pose_mat, _, inlier_ratio = depth_flow2pose_pt(depth, flow[:, :2], K,
-                                                           K_inv,
-                                                           gs=16, th=2,
-                                                           method='PnP')
-
-            i_scale = 0
-            disp, flow, K, K_inv, = disps[i_scale], flows[i_scale], \
-                                    pyramid_K[i_scale], pyramid_K_inv[i_scale]
-            mask_th = 3
-            md = 3
-            ph_p = 80
-            k_gauss = 15
-            s_gauss = 5
-
-            _, _, h, w = flow.size()
-            h, w = h * 4, w * 4
-            disp = F.interpolate(disp.unsqueeze(1), (h, w), mode='bilinear',
-                                 align_corners=True).squeeze(1) * raw_W.reshape(-1, 1, 1)
-
-            depth = fl_bl.reshape(-1, 1, 1) / disp.clamp(min=1e-3)
-            flow = F.interpolate(flow * 4, (h, w), mode='bilinear', align_corners=True)
-
-            rigid_flow = depth_pose2flow_pt(depth, pose_mat, K, K_inv)
-
-            # mask from non-rigid residual
-            th_mask = EPE(flow[:, :2], rigid_flow) < mask_th / 2. ** i_scale
-
-            # mask from photometric error
-            im1_origin = img_pair[:, :3]
-            im2_origin = img_pair[:, 3:]
-            im1_scaled = F.interpolate(im1_origin, (h, w), mode='area')
-            im2_scaled = F.interpolate(im2_origin, (h, w), mode='area')
-
-            im1_recons, occu_mask1 = flow_warp(im2_scaled, flow[:, :2], flow[:, 2:])
-
-            im1_recons_rigid = flow_warp(im2_scaled, rigid_flow)
-
-            flow_e = F.pad(SSIM(im1_scaled, im1_recons, md=md), [md] * 4
-                           ).mean(1, keepdim=True) * 0.85 + 0.15 * (
-                                 im1_scaled - im1_recons).abs()
-            rigid_e = F.pad(SSIM(im1_scaled, im1_recons_rigid, md=md), [md] * 4
-                            ).mean(1, keepdim=True) * 0.85 + 0.15 * (
-                                  im1_scaled - im1_recons_rigid).abs()
-
-            dist_e = rigid_e - flow_e
-            dist_e = gaussianblur_pt(dist_e, (k_gauss, k_gauss), s_gauss)
-
-            delta = percentile_pt(dist_e, th=ph_p).reshape(-1, 1, 1, 1)
-            ph_mask = dist_e < delta
-
-            rigid_mask = (ph_mask | th_mask)  # | (occu_mask1 < 0.2)
-            valid_poses = inlier_ratio > 0.3
-            rigid_mask = (rigid_mask & valid_poses.reshape(-1, 1, 1, 1)).float()
-
-            # cv2.imshow('occu_mask', rigid_mask[0].detach().cpu().numpy()[0] * 255)
-            # cv2.waitKey()
-            fused_flow = rigid_mask * rigid_flow + (1 - rigid_mask) * flow[:, :2]
-
-            # cv2.imshow('img1',
-            #            im1_origin.detach().cpu().numpy()[0].transpose([1, 2, 0])[:, :,
-            #            ::-1])
-            # cv2.imshow('th_mask',
-            #            th_mask.detach().cpu().numpy()[0].transpose([1, 2, 0])[:, :,
-            #            ::-1] * 255)
-            # cv2.imshow('occu_mask',
-            #            (occu_mask1 < 0.2).detach().cpu().numpy()[0].transpose([1, 2, 0])[
-            #            :, :,
-            #            ::-1] * 255)
-            # cv2.imshow('obj_masks',
-            #            obj_masks[0].astype(np.float32) * 255)
-            # cv2.imshow('gt_occu_mask',
-            #            (noc_masks[0] - occ_masks[0]).astype(np.float32) * 255)
-            #
-            # # FN FP
-            #
-            # cv2.waitKey()
-
-            # eval object masks
-
-            obj_masks_pred = np.split(1 - rigid_mask.detach().cpu().numpy(),
-                                      rigid_mask.size(0))
-
-            errs_mask = eval_mask([np.squeeze(i) for i in obj_masks_pred], obj_masks)
-
-            fused_flow = fused_flow.detach().cpu().numpy().transpose([0, 2, 3, 1])
-
-            gt_flows = [np.concatenate([f, o, no], axis=2) for
-                        f, o, no in zip(gt_flows, occ_masks, noc_masks)]
-            err_flow = evaluate_kitti_flow(gt_flows, fused_flow)
-
-            error_meters.update(err_flow + list(errs_mask[:-1]), img_pair.size(0))
-            if error_meters.avg[0] > 100:
-                print('.')
-
-            #
-            #
-            #
-            #
-            # disp_lr = disparities[0].detach().cpu().numpy()
-            # disp = disp_lr[:, 0, :, :]  # only the largest left disp is used
-            #
-            # gt_disp_occ = list(map(load_disp, data['disp_occ']))
-            # fl_bl_np = [f.detach().cpu().numpy() for f in fl_bl]
-            #
-            # gt_depth_occ = list(
-            #     map(lambda p, q: convert_disp_to_depth(p, normed=False, fl_bl=q),
-            #         gt_disp_occ, fl_bl_np))
-            # im_size = list(map(lambda p: p.shape[:2], gt_disp_occ))
-            # pred_depth = list(
-            #     map(lambda p, q, r: convert_disp_to_depth(p, None, q, fl_bl=r),
-            #         disp, im_size, fl_bl_np))
-            #
-            # err_depth = compute_depth_errors(gt_depth_occ, pred_depth)
-            #
-
-            #
-            # # measure elapsed time
-            # error_meters.update(err_depth + err_flow, )
-            #
-            # batch_time.update(time.time() - end)
-            # end = time.time()
-            #
-            if i_step % self.cfg.print_freq == 0:
-                self._log.info('Test: [{0}/{1}]\t Time {2}\t '.format(
-                    i_step, self.cfg.valid_size, batch_time) + ' '.join(
-                    map('{:.2f}'.format, error_meters.avg)))
-
-            if i_step > self.cfg.valid_size:
-                break
-
-        # write error to tf board.
-        for value, name in zip(error_meters.avg, error_names):
-            self.summary_writer.add_scalar('Valid_' + name, value, self.i_epoch)
-
-        # In order to reduce the space occupied during debugging,
-        # only the model with more than cfg.save_iter iterations will be saved.
-        if self.i_iter > self.cfg.save_iter:
-            self.save_checkpoint([error_meters.avg[0], error_meters.avg[7]],
-                                 ['KITTI_rigid_depth', 'KITTI_rigid_flow'])
+        self.save_model([error_meters.avg[0], error_meters.avg[7]],
+                        ['KITTI_rigid_depth', 'KITTI_rigid_flow'])
 
         return error_meters.avg, error_names

@@ -2,16 +2,10 @@
   "data": {
     "flow_data": "/Data/flow_dataset/kitti_scene_flow/training/",
     "root": "/Data/KITTI_raw/",
-    "test_shape": [
-      256,
-      832
-    ],
+    "test_shape": [256, 832],
     "test_stereo": false,
     "train_file": "./data/filenames/kitti_train_files_png_4frames.txt",
-    "train_shape": [
-      256,
-      832
-    ],
+    "train_shape": [256, 832],
     "train_stereo": false,
     "type": "KITTI_15"
   },
@@ -38,20 +32,8 @@
     "w_l1": 0.15,
     "w_s1": 0.0,
     "w_s2": 1.0,
-    "w_scales": [
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      0.0
-    ],
-    "w_sm_scales": [
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      0.0
-    ],
+    "w_scales": [1.0, 1.0, 1.0, 1.0, 0.0],
+    "w_sm_scales": [1.0, 1.0, 1.0, 1.0, 0.0],
     "w_smooth": 75.0,
     "w_ssim": 0.85,
     "w_ternary": 0.0,
@@ -59,15 +41,7 @@
   },
   "model": {
     "bn": false,
-    "lv_chs": [
-      3,
-      16,
-      32,
-      64,
-      96,
-      128,
-      192
-    ],
+    "lv_chs": [3, 16, 32, 64, 96, 128, 192],
     "n_out": 5,
     "type": "pwcflow"
   },

@@ -125,25 +125,17 @@ class RigidFlowLoss(nn.modules.Module):
 
             th_mask = EPE(flow[:, :2], rigid_flow) < self.cfg.mask_th / 2 ** i
 
-            if self.cfg.mask_by.startswith('recons'):
-                flow_e = F.pad(SSIM(im1_scaled, im1_recons, md=md), [md] * 4
-                               ).mean(1, keepdim=True)  # [B, 1, h ,w]
-                rigid_e = F.pad(SSIM(im1_scaled, im1_recons_rigid, md=md), [md] * 4
-                                ).mean(1, keepdim=True)
+            flow_e = F.pad(SSIM(im1_scaled, im1_recons, md=md), [md] * 4
+                           ).mean(1, keepdim=True)  # [B, 1, h ,w]
+            rigid_e = F.pad(SSIM(im1_scaled, im1_recons_rigid, md=md), [md] * 4
+                            ).mean(1, keepdim=True)
 
-                dist_e = rigid_e - flow_e
-                dist_e = gaussianblur_pt(dist_e, (11, 11), 5)
+            dist_e = rigid_e - flow_e
+            dist_e = gaussianblur_pt(dist_e, (11, 11), 5)
 
-                delta = percentile_pt(dist_e, th=self.cfg.recons_p).reshape(-1, 1, 1, 1)
-                rigid_mask = dist_e < delta # [B, 1, h ,w]
-                if self.cfg.mask_by == 'recons_th_and':
-                    rigid_mask = rigid_mask & th_mask
-                elif self.cfg.mask_by == 'recons_th_or':
-                    rigid_mask = rigid_mask | th_mask
-            elif self.cfg.mask_by == 'th':
-                rigid_mask = th_mask
-            else:
-                raise ValueError('cfg.loss.mask_by')
+            delta = percentile_pt(dist_e, th=self.cfg.recons_p).reshape(-1, 1, 1, 1)
+            rigid_mask = dist_e < delta # [B, 1, h ,w]
+            rigid_mask = rigid_mask & th_mask
 
             # mask out the failure depth region
             rigid_mask = rigid_mask & (depth.unsqueeze(1) < 80)

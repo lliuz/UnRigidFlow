@@ -23,7 +23,7 @@ year = {2019}
 
 This codebase was developed and tested with Python 3.5, Pytorch>=0.4.1, OpenCV 3.4, CUDA 9.0 and Ubuntu 16.04.
 
-Most of python packages can be install by
+Most of the python packages can be installed by
 
 ```sh
 pip3 install -r requirements.txt
@@ -42,9 +42,9 @@ and add `<correlation_package>` to `$PYTHONPATH`.
 >
 > Just replace `#include <torch/torch.h>` with `#include <torch/extension.h>` , adding  `#include <ATen/cuda/CUDAContext.h>` and then replacing all `at::globalContext().getCurrentCUDAStream()` with `at::cuda::getCurrentCUDAStream()`.
 
-## Training the models
+## Training and Evaluation
 
-We are mainly focus on KITTI benchmark. You will need to download all of the [KITTI raw data](http://www.cvlibs.net/datasets/kitti/raw_data.php) and calibration files to train the model. You will also need the training files of [KITTI 2012](http://www.cvlibs.net/datasets/kitti/eval_stereo_flow.php?benchmark=stereo) and [KITTI 2015](http://www.cvlibs.net/datasets/kitti/eval_scene_flow.php?benchmark=stereo) with calibration files [[1]](http://www.cvlibs.net/download.php?file=data_stereo_flow_calib.zip), [[2]](http://www.cvlibs.net/download.php?file=data_scene_flow_calib.zip) for validating the models. 
+We are mainly focused on KITTI benchmark. You will need to download all of the [KITTI raw data](http://www.cvlibs.net/datasets/kitti/raw_data.php) and calibration files to train the model. You will also need the training files of [KITTI 2012](http://www.cvlibs.net/datasets/kitti/eval_stereo_flow.php?benchmark=stereo) and [KITTI 2015](http://www.cvlibs.net/datasets/kitti/eval_scene_flow.php?benchmark=stereo) with calibration files [[1]](http://www.cvlibs.net/download.php?file=data_stereo_flow_calib.zip), [[2]](http://www.cvlibs.net/download.php?file=data_scene_flow_calib.zip) for validating the models. 
 
 The complete training contains 3 steps:
 
@@ -66,13 +66,15 @@ The complete training contains 3 steps:
    python3 train.py -c configs/KITTI_rigid_flow_stereo.json
    ```
 
+For evaluation, just adding `--e` options and modifying the corresponding model path for the above commands.
+
 ## Pre-trained Models
 
-You can download our [pre-trained models]()(coming soon), here are the model list and the performance:
+You can download our [pre-trained models](./checkpoints/), we provide the models as follow:
 
-- `KITTI_flow`: The separately trained optical flow network on KITTI raw data (from scratch), which reaches 6.50 EPE on the KITTI 15 training set.
+- `KITTI_flow`: The separately trained optical flow network on KITTI raw data (from scratch)
 - `KITTI_stereo_depth`: The stereo depth network on KITTI raw data.
-- `KITTI_flow_joint`: The optical flow network jointly trained with stereo depth on KITTI raw data, which reaches 5.49 EPE on the KITTI 15 training set. It can reach 5.17 EPE on the KITTI 15 training set, and 11.66% F1 scores on KITTI 15 test set by fusing with rigidity segmentation.
+- `KITTI_flow_joint`: The optical flow network jointly trained with stereo depth on KITTI raw data.
 
 ## Acknowledgement
 

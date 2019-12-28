@@ -113,7 +113,6 @@ class TrainFramework(BaseTrainer):
         # write error to tf board.
         for value, name in zip(error_meters.avg, error_names):
             self.summary_writer.add_scalar('Valid_' + name, value, self.i_epoch)
-            self._run.log_scalar('Valid_' + name, value, self.i_epoch)
 
         # In order to reduce the space occupied during debugging,
         # only the model with more than cfg.save_iter iterations will be saved.

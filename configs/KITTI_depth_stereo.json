@@ -2,16 +2,10 @@
   "data": {
     "flow_data": "/Data/flow_dataset/kitti_scene_flow/training/",
     "root": "/Data/KITTI_raw/",
-    "test_shape": [
-      256,
-      832
-    ],
+    "test_shape": [256, 832],
     "test_stereo": true,
     "train_file": "./data/filenames/kitti_train_files_png_4frames.txt",
-    "train_shape": [
-      256,
-      832
-    ],
+    "train_shape": [256, 832],
     "train_stereo": true,
     "type": "KITTI_15"
   },
@@ -35,15 +29,7 @@
   },
   "model": {
     "bn": false,
-    "lv_chs": [
-      3,
-      16,
-      32,
-      64,
-      96,
-      128,
-      192
-    ],
+    "lv_chs": [3, 16, 32, 64, 96, 128, 192],
     "n_out": 5,
     "type": "pwcdisp"
   },
