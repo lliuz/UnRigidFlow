@@ -1,5 +1,5 @@
 imageio==2.4.1
-numpy==1.15.1
+numpy==1.22.0
 path.py==11.1.0
 Pillow==6.2.0
 scikit-image==0.14.0
